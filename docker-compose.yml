@@ -1,25 +1,32 @@
-concourse-db:
-  image: postgres:9.5
-  environment:
-    POSTGRES_DB: concourse
-    POSTGRES_PASSWORD: concourse_pass
-    POSTGRES_USER: concourse_user
-    PGDATA: /database
-concourse-web:
-  build: .
-  links:
-    - concourse-db
-  command: /root/scripts/start.sh web
-  ports:
-    - "8080:8080"
-  environment:
-    CONCOURSE_LOGIN: '${CONCOURSE_LOGIN}'
-    CONCOURSE_PASSWORD: '${CONCOURSE_PASSWORD}'
-    CONCOURSE_EXTERNAL_URL: '${CONCOURSE_EXTERNAL_URL}'
-concourse-worker:
-  build: .
-  privileged: true
-  links:
-    - concourse-web
-    - concourse-db
-  command: /root/scripts/start.sh worker
+version: '2'
+services:
+  concourse-db:
+    image: postgres:9.5
+    environment:
+      POSTGRES_DB: concourse
+      POSTGRES_PASSWORD: concourse_pass
+      POSTGRES_USER: concourse_user
+      PGDATA: /database
+  concourse-web:
+    build: .
+    links:
+      - concourse-db
+    command: /root/scripts/start.sh web
+    ports:
+      - "8080:8080"
+    environment:
+      CONCOURSE_LOGIN: '${CONCOURSE_LOGIN}'
+      CONCOURSE_PASSWORD: '${CONCOURSE_PASSWORD}'
+      CONCOURSE_EXTERNAL_URL: '${CONCOURSE_EXTERNAL_URL}'
+  concourse-worker:
+    build: .
+    privileged: true
+    volumes:
+      - garden_worker:/opt/concourse/worker
+    links:
+      - concourse-web
+      - concourse-db
+    command: /root/scripts/start.sh worker
+volumes:
+  garden_worker:
+    driver: local
